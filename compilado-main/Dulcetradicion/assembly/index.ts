@@ -1,0 +1,280 @@
+import { context, logging, storage, ContractPromiseBatch, u128 } from 'near-sdk-as';
+import { Productos, allProductos, Usuarios, allUsuarios/*, Proveedors, allProveedors, Clients, allClients*/, ONE_NEAR } from './models'
+
+const contractOwner = context.sender;
+const allProductosIndex = allProductos.length;
+const allUsuariosIndex = allUsuarios.length;
+/*const allProveedorsIndex = allProveedors.length;
+const allClientsIndex = allClients.length;*/
+
+//near call dev-1685659049163-18558372842007 Registrar_Productos '{"id_Productos": "1", "Nombre": "Torrejas", "Cantidad": "Mayoreo", "Precio": "15", "Fecha": "11/07/2023", "Hora": "20:00", "Proveedor": "Proveedor1", "Pedidos": "50"}' --accountId angeles.testnet
+export function Registrar_Productos(id_Productos: string, Nombre: string, Cantidad: string, Precio: string, Fecha: string, Hora: string, Pedidos: string): Productos {
+    const nuevoProductos = new Productos(id_Productos, Nombre, Cantidad, Precio, Fecha, Hora, Pedidos);
+    allProductos.push(nuevoProductos);
+    logging.log('Nuevo Productos registrado: ' + nuevoProductos.Nombre);
+    /*if (Proveedor == "True"){
+        addProveedors();
+    }*/
+
+    return nuevoProductos;
+}
+/*
+//near call dev-1685659049163-18558372842007 Eliminar_Productos '{"Nombre": "Torrejas"}' --accountId angeles.testnet
+export function Eliminar_Productos(id_Productos: string): boolean {
+    for (let i = 0; i < allProductos.length; i++) {
+        if (allProductos[i].id_Productos == id_Productos) {
+            allProductos.swap_remove(i);
+            logging.log('Productos eliminado');
+            return true;
+        }
+    }
+    logging.log('El Productos no existe');
+    return false;
+}
+*/
+/*
+//near call dev-1685659049163-18558372842007 Actualizar_Productos '{"id_Productos": "3", "Nombre": "Torrejas", "Cantidad": "Mayoreo, "Precio": "15", "Fecha": "1/06/2023", "Hora": "12:20", "Proveedor": "Abel", "Pedidos": "50"}' --accountId angeles.testnet
+export function Actualizar_Productos(id_Productos: string, Nombre: string, Cantidad: string, Precio: string, Fecha: string, Hora: string, Pedidos: string): Productos | null {
+    for (let i = 0; i < allProductos.length; i++) {
+        if (allProductos[i].id_Productos == id_Productos) {
+            allProductos.swap_remove(i);
+            const nuevoProductos = new Productos(id_Productos, Nombre, Cantidad, Precio, Fecha, Hora, Pedidos);
+            allProductos.push(nuevoProductos);
+            logging.log('Productos actualizado: ' + allProductos[i].Nombre);
+            return allProductos[i];
+        }
+    }
+    logging.log('Productos no encontrado');
+    return null;
+}
+*/
+//near call dev-1685659049163-18558372842007 Buscar_Productos '{"Nombre": "Torrejas"}' --accountId angeles.testnet
+export function Buscar_Productos(Nombre: string): Productos[] {
+    const ProductossEncontrados = new Array<Productos>();
+    for (let i = 0; i < allProductos.length; i++) {
+        if (allProductos[i].Nombre == Nombre) {
+            ProductossEncontrados.push(allProductos[i]);
+        }
+    }
+    return ProductossEncontrados;
+}
+
+/*export function Autorizacion_Productos(id_Productos: i32, nombre: string): void {
+    for (let i = 0; i < allProductos.length; i++) {
+        if (allProductos[i].id_Productos == id_Productos && allProductos[i].Nombre == nombre) {
+            const batch = ContractPromiseBatch.create(allProductos[i].Proveedor);
+            batch.addPromise(context.attachedDeposit >= allProductos[i].Precio,
+                'El monto enviado debe ser mayor o igual al precio del Productos');
+            batch.addPromise(context.sender == allProductos[i].Proveedor,
+                'Solo el proveedor del Productos puede autorizar Pedidoses');
+            const promesa = batch.then(context.contractName).function_call('Reservar_Productos', { "id_Productos": id_Productos, "nombre": nombre }, 0, u128.Zero);
+            promesa.returnAsResult();
+            break;
+        }
+    }
+}
+
+
+//near call dev-1685659049163-18558372842007 Cancelar_Productos '{"id_Productos":"1"}' --accountId angelestestnet.testnet
+export function Cancelar_Productos(id_Productos: string): boolean {
+    for (let i = 0; i < allProductos.length; i++) {
+        if (allProductos[i].id_Productos == id_Productos) {
+            allProductos.swap_remove(i)
+            // Realizar la lógica de cancelación del Productos aquí
+            // ...
+
+            logging.log('Productos cancelado');
+            return true;
+        }
+    }
+    logging.log('El Productos no existe');
+    return false;
+}
+
+//near call dev-1685659049163-18558372842007Identificar_Productos '{"Nombre":"Dulces picantes "}' --accountId angelestestnet.testnet
+export function Identificar_Productos(Nombre: string): boolean {
+    for (let i = 0; i < allProductos.length; i++) {
+        if (allProductos[i].Nombre === Nombre) {
+            logging.log('Productos identificado');
+            return true;
+        }
+    }
+    logging.log('El Productos no existe');
+    return false;
+}
+
+
+/*export function Identificar_Productos(nombre: string, cantidad: string): Productos | null {
+  const Productos = allProductos.find(e => e.Nombre == nombre && e.Cantidad == cantidad);
+  if (!Productos) {
+      logging.log('Productos no encontrado');
+      return null;
+  }
+  logging.log(`El Productos ${Productos.Nombre} ha sido identificado`);
+  return Productos;
+}
+
+export function Calendarizacion_Productos(Fecha: u64, Precio: f64, Hora: u64, Pedidos: i32, Proveedor: string): Productos[] {
+  const Productoss = allProductos.filter(e => e.Fecha == Fecha && e.Precio == Precio && e.Hora == Hora && e.Pedidos == Pedidos && e.Proveedor == Proveedor);
+  if (Productoss.length == 0) {
+      logging.log('No hay Productoss en esa fecha, hora y precio');
+      return Productoss;
+  }
+  logging.log(`Se han encontrado ${Productoss.length} Productoss para la fecha ${Fecha}, hora ${Hora}, precio ${Precio}, reserva ${Pedidos} y proveedor ${Proveedor}`);
+  return Productoss;
+}
+
+export function Pago_Productos(Precio: f64): void {
+  const accountBalance = context.accountBalance;
+  if (accountBalance < Precio) {
+      logging.log(`El usuario ${context.sender} no tiene suficientes fondos para pagar el Productos`);
+      return;
+  }
+  logging.log(`El usuario ${context.sender} ha pagado ${Precio} NEAR por el Productos`);
+}
+*/
+//near call dev-1685659049163-18558372842007 Registrar_Usuario '{"Nombre": "LUIS", "ApellidoPat": "Angeles", "ApellidoMat": "Ortiz", "Telefono": "7411265386", "Direccion": "Desconocida", "Correo": "correo@gmail.com", "Canales": "Facebook, Twitter, Instagram", "Proveedor": true, "Cliente": false, "Sexo": "Masculino", "FechaNac": "29/07/2001", "Wallet": "angeles.testnet"}' --accountId angeles.testnet
+export function Registrar_Usuario(Nombre: string, ApellidoPat: string, ApellidoMat: string, Telefono: string, Direccion: string, Correo: string, Canales: string, Proveedor: boolean, Cliente: boolean, Sexo: string, FechaNac: string, Wallet: string): Usuarios {
+    const nuevoUsuario = new Usuarios(Nombre, ApellidoPat, ApellidoMat, Telefono, Direccion, Correo, Canales, Proveedor, Cliente, Sexo, FechaNac, Wallet);
+    allUsuarios.push(nuevoUsuario);
+    logging.log('Nuevo usuario registrado: ' + nuevoUsuario.Nombre + ' ' + nuevoUsuario.ApellidoPat);
+    return nuevoUsuario;
+}
+    /*if (Proveedor == true){
+        addProveedors();
+    }
+    if (Cliente == true){
+        addClients();
+    }
+    return nuevoUsuario;
+}
+/*
+//near call dev-1685659049163-18558372842007 Eliminar_Usuario '{"Nombre": "Leo"}' --accountId angeles.testnet
+export function Eliminar_Usuario(Nombre: string): boolean {
+    for (let i = 0; i < allUsuarios.length; i++) {
+        if (allUsuarios[i].Nombre == Nombre) {
+            allUsuarios.swap_remove(i);
+            logging.log('Usuario eliminado');
+            return true;
+        }
+    }
+    logging.log('El Usuario no existe');
+    return false;
+}
+
+//near call dev-1685659049163-18558372842007Actualizar_Usuario '{"Nombre": "Leo", "ApellidoPat": "Ortiz", "ApellidoMat": "osorio", "Telefono": "359678954", "Direccion": "Desconocida", "Correo": "correo@gmail.com", "Canales": "Facebook, Twitter, Instagram", "Proveedor": true, "Cliente": false, "Sexo": "Masculino", "FechaNac": "11/07/2001", "Wallet": "angeles.testnet"}' --accountId angeles.testnet
+export function Actualizar_Usuario(Nombre: string, ApellidoPat: string, ApellidoMat: string, Telefono: string, Direccion: string, Correo: string, Canales: string, Proveedor: boolean, Cliente: boolean, Sexo: string, FechaNac: string, Wallet: string): Usuarios | null {
+    for (let i = 0; i < allUsuarios.length; i++) {
+        if (allUsuarios[i].Nombre == Nombre) {
+            allUsuarios.swap_remove(i);
+            const nuevoUsuario = new Usuarios(Nombre, ApellidoPat, ApellidoMat, Telefono, Direccion, Correo, Canales, Proveedor, Cliente, Sexo, FechaNac, Wallet);
+            allUsuarios.push(nuevoUsuario);
+            logging.log('Usuario actualizado: ' + allUsuarios[i].Nombre);
+            return allUsuarios[i];
+        }
+    }
+    logging.log('Usuario no encontrado');
+    return null;
+}
+
+//near call dev-1685659049163-18558372842007 Buscar_Usuario '{"Nombre": "Leo Osorio"}' --accountId angeles.testnet
+export function Buscar_Usuario(Nombre: string): Usuarios[] {
+    const usuariosEncontrados = new Array<Usuarios>();
+    for (let i = 0; i < allUsuarios.length; i++) {
+        if (allUsuarios[i].Nombre == Nombre) {
+            usuariosEncontrados.push(allUsuarios[i]);
+        }
+    }
+    return usuariosEncontrados;
+}
+
+/*export function Verificar_Usuario(Wallet: string): Usuarios {
+    return allUsuarios.find(u => u.Wallet == Wallet);
+}
+
+//near call dev-1685659049163-18558372842007 Identificar_Usuario '{"Nombre":"Angeles"}' --accountId sandra1009testnet.testnet
+export function Identificar_Usuario(Nombre: string): boolean {
+    for (let i = 0; i < allUsuarios.length; i++) {
+        if (allUsuarios[i].Nombre === Nombre) {
+            logging.log('Usuario identificado');
+            return true;
+        }
+    }
+    logging.log('El Usuario no existe');
+    return false;
+}
+
+/*export function Verificar_Usuario(Nombre: string,ApellidoPat: string,ApellidoMat: String): boolean {
+    for (let i = 0; i < allUsuarios.length; i++) {
+        const verificar = new Array<Usuarios>();
+        for (let i = 0; i < allUsuarios.length; i++) {
+            if (allUsuarios[i].Nombre == Nombre) {
+                verificar.push(allUsuarios[i]);
+            }
+        }
+        return verificar;
+        }
+        logging.log('Verificación fallida');
+    }*/
+    
+
+
+/*
+  export function addProveedors(): Proveedors {
+    const data = new Array<Proveedors>(allProveedorsIndex) 
+    let exists = false;
+     const Proveedor = new Proveedors()
+    for(let i = 0; i < allProveedorsIndex; i++) {
+        data[i] = allProveedors[i];
+    }
+    for(let x = 0; x < data.length; x++) {
+        if(context.sender == data[x].Nombre) {
+             logging.log('Este Usuario Proveedor ya existe!')
+             exists = true;
+            break
+        }
+    }
+    if(exists == false) {
+        logging.log('Este Usuario Proveedor no existe, añadiendo ahora!')
+        allProveedors.push(Proveedor)
+        return Proveedor
+    }
+    return Proveedor
+}
+
+
+export function addClients(): Clients {
+    const data = new Array<Clients>(allClientsIndex) 
+    let exists = false;
+     const Cliente = new Clients()
+    for(let i = 0; i < allClientsIndex; i++) {
+        data[i] = allClients[i];
+    }
+    for(let x = 0; x < data.length; x++) {
+        if(context.sender == data[x].Nombre) {
+             logging.log('Este Usuario Proveedor ya existe!')
+             exists = true;
+            break
+        }
+    }
+    if(exists == false) {
+        logging.log('Este Usuario Proveedor no existe, añadiendo ahora!')
+        allClients.push(Cliente)
+        return Cliente
+    }
+    return Cliente
+}
+
+export function getProveedors(): Proveedors[] {
+    const data = new Array<Proveedors>(allProveedorsIndex);
+    for(let i = 0; i < allProveedorsIndex; i++) {
+        data[i] = allProveedors[i]
+    }
+    return data;
+}
+
+
+export function getProveedorsLength(): number {
+    return allProveedors.length;
+}
+*/
